@@ -1,0 +1,364 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.FrmMain..Create(BaseForm)
+Gui.FrmMain..Caption("6445 Aged Inventory Report")
+Gui.FrmMain..Size(292,109)
+Gui.FrmMain..MinX(0)
+Gui.FrmMain..MinY(0)
+Gui.FrmMain..Position(0,0)
+Gui.FrmMain..AlwaysOnTop(False)
+Gui.FrmMain..FontName("Tahoma")
+Gui.FrmMain..FontSize(8.25)
+Gui.FrmMain..ControlBox(True)
+Gui.FrmMain..MaxButton(True)
+Gui.FrmMain..MinButton(True)
+Gui.FrmMain..MousePointer(0)
+Gui.FrmMain..Moveable(True)
+Gui.FrmMain..Sizeable(True)
+Gui.FrmMain..ShowInTaskBar(True)
+Gui.FrmMain..TitleBar(True)
+Gui.FrmMain..Event(UnLoad,FrmMain_UnLoad)
+Gui.FrmMain.dtpStart.Create(DatePicker)
+Gui.FrmMain.dtpStart.Enabled(True)
+Gui.FrmMain.dtpStart.Visible(True)
+Gui.FrmMain.dtpStart.Zorder(0)
+Gui.FrmMain.dtpStart.Size(100,20)
+Gui.FrmMain.dtpStart.Position(167,28)
+Gui.FrmMain.dtpStart.CheckBox(False)
+Gui.FrmMain.dtpStart.FontName("Tahoma")
+Gui.FrmMain.dtpStart.FontSize(8.25)
+Gui.FrmMain.lblPrompt.Create(Label,"Please select a start date",True,122,13,0,14,19,True,0,"Tahoma",8.25,,0,0)
+Gui.FrmMain.lblPrompt.BorderStyle(0)
+Gui.FrmMain.cmdRun.Create(Button)
+Gui.FrmMain.cmdRun.Enabled(True)
+Gui.FrmMain.cmdRun.Visible(True)
+Gui.FrmMain.cmdRun.Zorder(0)
+Gui.FrmMain.cmdRun.Size(75,23)
+Gui.FrmMain.cmdRun.Position(33,42)
+Gui.FrmMain.cmdRun.Caption("Run Report")
+Gui.FrmMain.cmdRun.FontName("Tahoma")
+Gui.FrmMain.cmdRun.FontSize(8.25)
+Gui.FrmMain.cmdRun.Event(Click,cmdRun_Click)
+Gui.FrmExcel..Create(BaseForm)
+Gui.FrmExcel..Caption("FrmExcel")
+Gui.FrmExcel..Size(1024,720)
+Gui.FrmExcel..MinX(0)
+Gui.FrmExcel..MinY(0)
+Gui.FrmExcel..Position(0,0)
+Gui.FrmExcel..AlwaysOnTop(False)
+Gui.FrmExcel..FontName("Tahoma")
+Gui.FrmExcel..FontSize(8.25)
+Gui.FrmExcel..ControlBox(True)
+Gui.FrmExcel..MaxButton(True)
+Gui.FrmExcel..MinButton(True)
+Gui.FrmExcel..MousePointer(0)
+Gui.FrmExcel..Moveable(True)
+Gui.FrmExcel..Sizeable(True)
+Gui.FrmExcel..ShowInTaskBar(True)
+Gui.FrmExcel..TitleBar(True)
+Gui.FrmExcel.GsGCExcel.Create(GsGridControl)
+Gui.FrmExcel.GsGCExcel.Enabled(True)
+Gui.FrmExcel.GsGCExcel.Visible(True)
+Gui.FrmExcel.GsGCExcel.Zorder(0)
+Gui.FrmExcel.GsGCExcel.Size(1007,652)
+Gui.FrmExcel.GsGCExcel.Position(8,30)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.bConOpen.Declare(Boolean, False)
+Program.Sub.Preflight.End
+Program.Sub.Main.Start
+'Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+'Customer: Multitek North America LLC 
+'Author: Brandon Medina 
+'Quote: 12996-0
+'About: Will create an excel spreadsheet of their aged inventory. User enteres in date and program looks back 9 months, as well as 24 months to show columns... 
+' part numbers, descriptions, product line, quantity, unit cost, extended cost, last usage, total sales in the last 9 months; and be run by date and include the past 9 months, 24 months, total dollar value by part number.
+
+Gui.FrmMain..Show
+Program.Sub.Main.End
+Program.Sub.cmdRun_Click.Start
+F.Intrinsic.Control.Try	
+	V.Local.sEnteredDate.Declare
+	V.Local.s9MonthPrior.Declare
+	V.Local.s24MonthPrior.Declare
+	V.Local.sYear.Declare
+	V.Local.sMonth.Declare
+	V.Local.sDay.Declare
+	V.Local.s1MonthLater.Declare
+	
+	V.Local.sEnteredDate.Set(V.Screen.FrmMain!dtpStart.Text)
+	
+	F.Intrinsic.UI.InvokeWaitDialog("Creating Spreadsheet...", "Please Wait")
+	
+	'Ignoring day, get month/year from 9 months prior 
+	F.Intrinsic.Date.Month(V.Local.sEnteredDate, V.Local.sMonth)
+	F.Intrinsic.Math.Sub(V.Local.sMonth, 9, V.Local.sMonth)
+	F.Intrinsic.Control.If(V.Local.sMonth, <=, 0)
+		F.Intrinsic.Math.Add(12, V.Local.sMonth, V.Local.sMonth)
+		F.Intrinsic.Date.Year(V.Local.sEnteredDate, V.Local.sYear)
+		V.Local.sYear.Set(V.Local.sYear.--)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.Date.Year(V.Local.sEnteredDate, V.Local.sYear)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.String.Build("{0}/{1}", V.Local.sMonth, V.Local.sYear, V.Local.s9MonthPrior)
+	
+	'Igoring day, get month/year from 24 months prior 
+	F.Intrinsic.Date.Year(V.Local.sEnteredDate, V.Local.sYear)
+	F.Intrinsic.Math.Sub(V.Local.sYear, 2, V.Local.sYear)
+	F.Intrinsic.Date.Month(V.Local.sEnteredDate, V.Local.sMonth)
+	F.Intrinsic.String.Build("{0}/{1}", V.Local.sMonth, V.Local.sYear, V.Local.s24MonthPrior)
+	
+	'Ignoring day, get month/year for one month after entered date 
+	F.Intrinsic.Date.Year(V.Local.sEnteredDate, V.Local.sYear)
+	F.Intrinsic.Date.Month(V.Local.sEnteredDate, V.Local.sMonth)
+	F.Intrinsic.Math.Add(V.Local.sMonth, 1, V.Local.sMonth)
+	F.Intrinsic.Control.If(V.Local.sMonth, >, 12)
+		V.Local.sMonth.Set("1")
+		F.Intrinsic.Math.Add(V.Local.sYear, 1, V.Local.sYear)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.String.Build("{0}/{1}", V.Local.sMonth, V.Local.sYear, V.Local.s1MonthLater)
+	
+	'Format Entered Date to have month/year 
+	F.Intrinsic.Date.Year(V.Local.sEnteredDate, V.Local.sYear)
+	F.Intrinsic.Date.Month(V.Local.sEnteredDate, V.Local.sMonth)
+	F.Intrinsic.String.Build("{0}/{1}", V.Local.sMonth, V.Local.sYear, V.Local.sEnteredDate)
+	
+	F.Intrinsic.Control.CallSub(BuildExcelColumns, 9MonthPrior, V.Local.s9MonthPrior, 24MonthPrior, V.Local.s24MonthPrior, EnteredDate, V.Local.sEnteredDate, 1MonthLater, V.Local.s1MonthLater)
+	F.Intrinsic.Control.CallSub(Export)
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdRun_Click.End
+Program.Sub.FrmMain_UnLoad.Start
+F.Intrinsic.Control.Try	
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+F.Intrinsic.Control.EndTry
+Program.Sub.FrmMain_UnLoad.End
+
+Program.Sub.BuildExcelColumns.Start
+F.Intrinsic.Control.Try
+	V.Local.s9MonthPrior.Declare
+	V.Local.s24MonthPrior.Declare
+	V.Local.s1MonthLater.Declare
+	V.Local.sEnteredDate.Declare
+	V.Local.sSQL.Declare
+	V.Local.sFilePath.Declare
+	V.Local.i.Declare(Long)
+	V.Local.j.Declare(Long)
+	V.Local.sMonthYearNumbers.Declare
+	V.Local.sRet.Declare
+	V.Local.sMonth.Declare
+	V.Local.sYear.Declare
+	V.Local.sDVName.Declare
+	V.Local.sFilter.Declare
+	V.Local.sCaptions.Declare
+	V.Local.sExtCostCaption.Declare
+	V.Local.sExpColumnFormula.Declare
+	V.Local.sTableCheck.Declare
+	
+	'Set argument variables 
+	V.Local.s9MonthPrior.Set(V.Args.9MonthPrior)
+	V.Local.s24MonthPrior.Set(V.Args.24MonthPrior)
+	V.Local.sEnteredDate.Set(V.Args.EnteredDate)
+	V.Local.s1MonthLater.Set(V.Args.1MonthLater)
+	
+	'Set all Month and year numbers up to the entered month value(Index 0: 2 digit Month, 1: 4 digit Year)
+	F.Intrinsic.String.Split(V.Local.sEnteredDate, "/", V.Local.sEnteredDate)
+	F.Intrinsic.String.Split(V.Local.s9MonthPrior, "/", V.Local.s9MonthPrior)
+	F.Intrinsic.String.Split(V.Local.s24MonthPrior, "/", V.Local.s24MonthPrior)
+	F.Intrinsic.String.Split(V.Local.s1MonthLater, "/", V.Local.s1MonthLater)
+	V.Local.j.Set(1)
+	F.Intrinsic.Control.For(V.Local.i, 0, 24, 1)
+		F.Intrinsic.Math.Add(V.Local.s24MonthPrior(0), V.Local.i, V.Local.sRet)
+		F.Intrinsic.Control.If(V.Local.sRet, >, 12)
+			F.Intrinsic.Math.Mod(V.Local.sRet, 12, V.Local.sMonth)
+			F.Intrinsic.Control.If(V.Local.sMonth, =, 0)
+				V.Local.sMonth.Set(12)
+				F.Intrinsic.Math.Add(V.Local.s24MonthPrior(1), V.Local.j, V.Local.sYear)
+				V.Local.j.Set(V.Local.j.++)
+			F.Intrinsic.Control.Else
+				F.Intrinsic.Control.If(V.Local.sMonth.Length, =, 1)
+					F.Intrinsic.String.Build("0{0}", V.Local.sMonth, V.Local.sMonth)
+				F.Intrinsic.Control.EndIf
+				F.Intrinsic.Math.Add(V.Local.s24MonthPrior(1), V.Local.j, V.Local.sYear)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Else
+			V.Local.sMonth.Set(V.Local.sRet)
+			'Add leading 0s 
+			F.Intrinsic.Control.If(V.Local.sMonth.Length, =, 1)
+				F.Intrinsic.String.Build("0{0}", V.Local.sMonth, V.Local.sMonth)
+			F.Intrinsic.Control.EndIf
+			V.Local.sYear.Set(V.Local.s24MonthPrior(1))
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.Local.i, =, 0)
+			F.Intrinsic.String.Build("{0}/{1}", V.Local.sMonth, V.Local.sYear, V.Local.sMonthYearNumbers)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Build("{0}*!*{1}/{2}", V.Local.sMonthYearNumbers, V.Local.sMonth, V.Local.sYear, V.Local.sMonthYearNumbers)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.i)
+	F.Intrinsic.String.Split(V.Local.sMonthYearNumbers, "*!*", V.Local.sMonthYearNumbers)
+	
+	'Write spreadsheets header cells 
+	
+	
+	'Build data table that will be used in spreadsheet 
+	F.ODBC.Connection!con.OpenCompanyConnection
+	V.Global.bConOpen.Set(True)
+	
+	'Reset all tables and views 
+	V.Local.sTableCheck.Set("dtMain*!*dtMonthBuckets*!*dtLastUsage*!*dtSales")
+	F.Intrinsic.String.Split(V.Local.sTableCheck, "*!*", V.Local.sTableCheck)
+	F.Intrinsic.Control.For(V.Local.i, 0, V.Local.sTableCheck.UBound, 1)
+		F.Intrinsic.Control.If(V.DataTable.[V.Local.sTableCheck(V.Local.i)].Exists)
+			F.Data.Datatable.Close(V.Local.sTableCheck(V.Local.i))
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.i)
+	
+	'Main portion
+	'IT: ITEM_MASTER
+	'IM: INVENTORY_MSTR
+	V.Local.sSQL.Set("select IT.PART as Part, IM.DESCRIPTION as Description, IM.PRODUCT_LINE as Product_Line, IM.QTY_ONHAND On_Hand_Qty, IM.AMT_COST as Unit_Cost from V_ITEM_MASTER IT left join V_INVENTORY_MSTR IM on IT.PART = IM.PART")
+	F.Data.Datatable.CreateFromSQL("dtMain", "con", V.Local.sSQL, True)
+	
+	'Grab entire 24 month period parts and quantity. Grabbing dates YYYYMM
+	F.Intrinsic.String.Build("select PART, (substring(DATE_REVISION, 1, 4)) + (substring(DATE_REVISION, 6, 2)) AS date_rev, QUANTITY from V_ITEM_MASTER where date_rev >= '{0}{1}' and date_rev <= '{2}{3}'", V.Local.sMonthYearNumbers(0).Right4, V.Local.sMonthYearNumbers(0).Left2, V.Local.sMonthYearNumbers(24).Right4, V.Local.sMonthYearNumbers(24).Left2, V.Local.sSQL)
+	F.Data.Datatable.CreateFromSQL("dtMonthBuckets", "con", V.Local.sSQL, True)
+	
+	'Add Total Dollars 
+	F.Data.Datatable.AddExpressionColumn("dtMain", "Total Dollars", "String", "On_Hand_Qty * Unit_Cost")
+	
+	'Grab entire 24 month period parts and last usage. YYMMDD
+	F.Intrinsic.String.Build("select PART, sum(QUANTITY) as QTY, CODE_TRANSACTION from INVENTORY_HIST where DATE_HISTORY >= '{0}{1}01' and DATE_HISTORY < '{2}{3}01' group by PART, CODE_TRANSACTION", V.Local.s24MonthPrior(1).Right2, V.Local.s24MonthPrior(0), V.Local.sEnteredDate(1).Right2, V.Local.sEnteredDate(0), V.Local.sSQL)
+	F.Data.Datatable.CreateFromSQL("dtLastUsage", "con", V.Local.sSQL, True)
+	
+	'Filter out Transaction codes that are not part of inventory usage calculations 
+	F.Data.Dictionary.Create("dictTransCodes")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "A10", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "A50", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "C52", "Y")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "J52", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "J55", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "O35", "Y")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "P10", "Y")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "P16", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "R10", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "R11", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "R10/R11", "Y")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "T10", "Y")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "T21", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "T40", "Y")
+	'F.Data.Dictionary.AddItem("dictTransCodes", "Q50", "Y")
+	F.Data.Dictionary.AddItem("dictTransCodes", "W10", "Y")
+	F.Data.Dictionary.SetDefaultReturn("dictTransCodes", "N")
+	
+	F.Data.Datatable.AddColumn("dtLastUsage", "CodeMatch", "String")
+	F.Data.DataTable.FillFromDictionary("dtLastUsage", "dictTransCodes", "CODE_TRANSACTION", "CodeMatch")
+	F.Data.Dictionary.Close("dictTransCodes")
+	
+	F.Data.DataView.Create("dtLastUsage", "dvLastUsage", 22, "CodeMatch='Y'", "")
+	
+	'Send filtered result to dtMain
+	F.Data.Dictionary.CreateFromDataView("dictFillLastUsage", "dtLastUsage", "dvLastUsage", "PART", "QTY")
+	F.Data.Dictionary.SetDefaultReturn("dictFillLastUsage", "0")
+	F.Data.DataTable.AddColumn("dtMain", "Last Usage", "String")
+	F.Data.DataTable.FillFromDictionary("dtMain", "dictFillLastUsage", "Part", "Last Usage")
+	F.Data.Dictionary.Close("dictFillLastUsage")
+	
+	'Grab entire 9 month prior for parts for total sales  YYYY-MM-DD
+	F.Intrinsic.String.Build("select PART, sum(QTY_ORDERED) as QTY from V_ORDER_HIST_LINE where DATE_ORDER >= '{0}-{1}-01' and DATE_ORDER < '{2}-{3}-01' group by PART", V.Local.s9MonthPrior(1), V.Local.s9MonthPrior(0), V.Local.s1MonthLater(1), V.Local.s1MonthLater(0), V.Local.sSQL)
+	F.Data.Datatable.CreateFromSQL("dtSales", "con", V.Local.sSQL, True)
+	F.Data.Datatable.AddColumn("dtMain", "Total Sales", "String")
+	
+	'Fill total sales for each part 
+	F.Data.DataView.Create("dtSales", "dvSales", 22)
+	F.Data.Dictionary.CreateFromDataView("dictSales", "dtSales", "dvSales", "PART", "QTY")
+	F.Data.Dictionary.SetDefaultReturn("dictSales", "0")
+	F.Data.Datatable.FillFromDictionary("dtMain", "dictSales", "PART", "Total Sales")
+	F.Data.Dictionary.Close("dictSales")
+	
+	'Loop through creating labels for the columns and filtering dtMonthBuckets to create 24 dataviews, one for each month. From those dataviews, create 24 dictionaries, and use that to fill dtMain's Qty Buckets
+	'Also add expression column for calculating Extended cost for each month (Qty * Cost)
+	F.Intrinsic.Control.For(V.Local.i, 0, 24, 1)
+		F.Intrinsic.String.Build("Qty {0}", V.Local.sMonthYearNumbers(V.Local.i), V.Local.sCaptions)
+		F.Intrinsic.String.Build("Ext Cost {0}", V.Local.sMonthYearNumbers(V.Local.i), V.Local.sExtCostCaption)
+		F.Intrinsic.String.Build("{0}{1}", V.Local.sMonthYearNumbers(V.Local.i).Right4, V.Local.sMonthYearNumbers(V.Local.i).Left2, V.Local.sRet)
+		F.Intrinsic.String.Build("dvMonth{0}", V.Local.i, V.Local.sDVName)
+		F.Intrinsic.String.Build("date_rev='{0}'", V.Local.sRet, V.Local.sFilter)
+	
+		F.Data.DataView.Create("dtMonthBuckets", V.Local.sDVName, 22, V.Local.sFilter, "")
+	
+		F.Intrinsic.Control.If(V.DataView.dtMonthBuckets![V.Local.sDVName].RowCount, >, 0)
+			F.Data.Datatable.AddColumn("dtMain", V.Local.sCaptions, "Float")
+			F.Data.Dictionary.CreateFromDataView("dictMonthQty", "dtMonthBuckets", V.Local.sDVName, "PART", "QUANTITY")
+			F.Data.Dictionary.SetDefaultReturn("dictMonthQty", "0")
+			F.Data.Datatable.FillFromDictionary("dtMain", "dictMonthQty", "PART", V.Local.sCaptions)
+			F.Data.Dictionary.Close("dictMonthQty")
+		F.Intrinsic.Control.Else
+			F.Data.Datatable.AddColumn("dtMain", V.Local.sCaptions, "Float", "0")
+		F.Intrinsic.Control.EndIf
+		
+		F.Data.DataView.Close("dtMonthBuckets", V.Local.sDVName)
+		F.Intrinsic.String.Build("[Unit_Cost] * [{0}]", V.Local.sCaptions, V.Local.sExpColumnFormula)
+		F.Data.Datatable.AddExpressionColumn("dtMain", V.Local.sExtCostCaption, "String", V.Local.sExpColumnFormula)
+	F.Intrinsic.Control.Next(V.Local.i)
+	
+	F.ODBC.Connection!con.Close
+	V.Global.bConOpen.Set(False)
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+F.Intrinsic.Control.EndTry
+Program.Sub.BuildExcelColumns.End
+
+Program.Sub.ErrorMsg.Start
+V.Local.sError.Declare
+
+F.Intrinsic.UI.CloseWaitDialog
+
+F.Intrinsic.Control.If(V.Global.bConOpen)
+	F.ODBC.Connection!con.Close
+F.Intrinsic.Control.EndIf	
+
+'Generic Error message.
+f.Intrinsic.String.Build("Project GCG_6445_AgedInvReport.g2u {0}{0}Subroutine: {1}{0}Error: {2} with Description: {3}", v.Ambient.NewLine, v.Args.CurrentSub, v.Ambient.ErrorNumber, v.Ambient.ErrorDescription, v.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+Program.Sub.ErrorMsg.End
+Program.Sub.Export.Start
+F.Intrinsic.Control.Try
+ 	V.Local.sFileExport.Declare
+    V.Local.bExcel.Declare
+    V.Local.bFileLocked.Declare
+    V.Local.sMsg.Declare
+	V.Local.sFileContents.Declare
+	V.Local.sRet.Declare
+
+	F.Automation.MSExcel.CheckPresence(V.Local.bExcel)
+	
+	Gui.FrmExcel.GsGCExcel.AddGridviewFromDatatable("GVMain", "dtMain")
+	Gui.FrmExcel.GsGCExcel.MainView("GVMain")
+	
+'	F.Data.DataView.Create("dtMain", "dvMain", 22)
+'	F.Data.DataView.ToString("dtMain", "dvMain", "*!*", "$!$", V.Local.sFileContents)
+	F.Intrinsic.String.Build("{0}GCG_6445_AgedInventory_{1}-{2}-{3}.xlsx",V.Caller.LocalGssTempDir,V.Ambient.Now.FormatMM, V.Ambient.Now.FormatDD, V.Ambient.Now.FormatYYYY, V.Local.sFileExport)
+	
+	F.Intrinsic.Control.If(V.Local.bExcel)
+'		F.Automation.MSExcel.WriteSpreadsheet(V.Local.sFileExport, V.Local.sFileContents)
+		Gui.FrmExcel.GsGCExcel.Export(V.Local.sFileExport, "xlsx")
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.UI.CloseWaitDialog
+	
+	F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+    
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+F.Intrinsic.Control.EndTry
+Program.Sub.Export.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$bmedina$}$20210816121552543$}$kOipCrsyLBVj2KoSwkcdK23ChxGVcBlEarwrywx22hGurz5sZSfadeE4A+mNlQRsUMsM3kaauPo=
+Program.Sub.Comments.End
